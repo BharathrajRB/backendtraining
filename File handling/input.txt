@@ -1,0 +1,456 @@
+compact1, compact2, compact3
+java.util.stream
+Interface Stream<T>
+Type Parameters:
+T - the type of the stream elements
+All Superinterfaces:
+AutoCloseable, BaseStream<T,Stream<T>>
+
+public interface Stream<T>
+extends BaseStream<T,Stream<T>>
+A sequence of elements supporting sequential and parallel aggregate operations. The following example illustrates an aggregate operation using Stream and IntStream:
+
+     int sum = widgets.stream()
+                      .filter(w -> w.getColor() == RED)
+                      .mapToInt(w -> w.getWeight())
+                      .sum();
+ 
+In this example, widgets is a Collection<Widget>. We create a stream of Widget objects via Collection.stream(), filter it to produce a stream containing only the red widgets, and then transform it into a stream of int values representing the weight of each red widget. Then this stream is summed to produce a total weight.
+In addition to Stream, which is a stream of object references, there are primitive specializations for IntStream, LongStream, and DoubleStream, all of which are referred to as "streams" and conform to the characteristics and restrictions described here.
+
+To perform a computation, stream operations are composed into a stream pipeline. A stream pipeline consists of a source (which might be an array, a collection, a generator function, an I/O channel, etc), zero or more intermediate operations (which transform a stream into another stream, such as filter(Predicate)), and a terminal operation (which produces a result or side-effect, such as count() or forEach(Consumer)). Streams are lazy; computation on the source data is only performed when the terminal operation is initiated, and source elements are consumed only as needed.
+
+Collections and streams, while bearing some superficial similarities, have different goals. Collections are primarily concerned with the efficient management of, and access to, their elements. By contrast, streams do not provide a means to directly access or manipulate their elements, and are instead concerned with declaratively describing their source and the computational operations which will be performed in aggregate on that source. However, if the provided stream operations do not offer the desired functionality, the BaseStream.iterator() and BaseStream.spliterator() operations can be used to perform a controlled traversal.
+
+A stream pipeline, like the "widgets" example above, can be viewed as a query on the stream source. Unless the source was explicitly designed for concurrent modification (such as a ConcurrentHashMap), unpredictable or erroneous behavior may result from modifying the stream source while it is being queried.
+
+Most stream operations accept parameters that describe user-specified behavior, such as the lambda expression w -> w.getWeight() passed to mapToInt in the example above. To preserve correct behavior, these behavioral parameters:
+
+must be non-interfering (they do not modify the stream source); and
+in most cases must be stateless (their result should not depend on any state that might change during execution of the stream pipeline).
+Such parameters are always instances of a functional interface such as Function, and are often lambda expressions or method references. Unless otherwise specified these parameters must be non-null.
+
+A stream should be operated on (invoking an intermediate or terminal stream operation) only once. This rules out, for example, "forked" streams, where the same source feeds two or more pipelines, or multiple traversals of the same stream. A stream implementation may throw IllegalStateException if it detects that the stream is being reused. However, since some stream operations may return their receiver rather than a new stream object, it may not be possible to detect reuse in all cases.
+
+Streams have a BaseStream.close() method and implement AutoCloseable, but nearly all stream instances do not actually need to be closed after use. Generally, only streams whose source is an IO channel (such as those returned by Files.lines(Path, Charset)) will require closing. Most streams are backed by collections, arrays, or generating functions, which require no special resource management. (If a stream does require closing, it can be declared as a resource in a try-with-resources statement.)
+
+Stream pipelines may execute either sequentially or in parallel. This execution mode is a property of the stream. Streams are created with an initial choice of sequential or parallel execution. (For example, Collection.stream() creates a sequential stream, and Collection.parallelStream() creates a parallel one.) This choice of execution mode may be modified by the BaseStream.sequential() or BaseStream.parallel() methods, and may be queried with the BaseStream.isParallel() method.
+
+Since:
+1.8
+See Also:
+IntStream, LongStream, DoubleStream, java.util.stream
+Nested Class Summary
+Nested Classes
+Modifier and Type	Interface and Description
+static interface 	Stream.Builder<T>
+A mutable builder for a Stream.
+Method Summary
+All MethodsStatic MethodsInstance MethodsAbstract MethodsDefault Methods
+Modifier and Type	Method and Description
+boolean	allMatch(Predicate<? super T> predicate)
+Returns whether all elements of this stream match the provided predicate.
+boolean	anyMatch(Predicate<? super T> predicate)
+Returns whether any elements of this stream match the provided predicate.
+static <T> Stream.Builder<T>	builder()
+Returns a builder for a Stream.
+<R,A> R	collect(Collector<? super T,A,R> collector)
+Performs a mutable reduction operation on the elements of this stream using a Collector.
+<R> R	collect(Supplier<R> supplier, BiConsumer<R,? super T> accumulator, BiConsumer<R,R> combiner)
+Performs a mutable reduction operation on the elements of this stream.
+static <T> Stream<T>	concat(Stream<? extends T> a, Stream<? extends T> b)
+Creates a lazily concatenated stream whose elements are all the elements of the first stream followed by all the elements of the second stream.
+long	count()
+Returns the count of elements in this stream.
+Stream<T>	distinct()
+Returns a stream consisting of the distinct elements (according to Object.equals(Object)) of this stream.
+static <T> Stream<T>	empty()
+Returns an empty sequential Stream.
+Stream<T>	filter(Predicate<? super T> predicate)
+Returns a stream consisting of the elements of this stream that match the given predicate.
+Optional<T>	findAny()
+Returns an Optional describing some element of the stream, or an empty Optional if the stream is empty.
+Optional<T>	findFirst()
+Returns an Optional describing the first element of this stream, or an empty Optional if the stream is empty.
+<R> Stream<R>	flatMap(Function<? super T,? extends Stream<? extends R>> mapper)
+Returns a stream consisting of the results of replacing each element of this stream with the contents of a mapped stream produced by applying the provided mapping function to each element.
+DoubleStream	flatMapToDouble(Function<? super T,? extends DoubleStream> mapper)
+Returns an DoubleStream consisting of the results of replacing each element of this stream with the contents of a mapped stream produced by applying the provided mapping function to each element.
+IntStream	flatMapToInt(Function<? super T,? extends IntStream> mapper)
+Returns an IntStream consisting of the results of replacing each element of this stream with the contents of a mapped stream produced by applying the provided mapping function to each element.
+LongStream	flatMapToLong(Function<? super T,? extends LongStream> mapper)
+Returns an LongStream consisting of the results of replacing each element of this stream with the contents of a mapped stream produced by applying the provided mapping function to each element.
+void	forEach(Consumer<? super T> action)
+Performs an action for each element of this stream.
+void	forEachOrdered(Consumer<? super T> action)
+Performs an action for each element of this stream, in the encounter order of the stream if the stream has a defined encounter order.
+static <T> Stream<T>	generate(Supplier<T> s)
+Returns an infinite sequential unordered stream where each element is generated by the provided Supplier.
+static <T> Stream<T>	iterate(T seed, UnaryOperator<T> f)
+Returns an infinite sequential ordered Stream produced by iterative application of a function f to an initial element seed, producing a Stream consisting of seed, f(seed), f(f(seed)), etc.
+Stream<T>	limit(long maxSize)
+Returns a stream consisting of the elements of this stream, truncated to be no longer than maxSize in length.
+<R> Stream<R>	map(Function<? super T,? extends R> mapper)
+Returns a stream consisting of the results of applying the given function to the elements of this stream.
+DoubleStream	mapToDouble(ToDoubleFunction<? super T> mapper)
+Returns a DoubleStream consisting of the results of applying the given function to the elements of this stream.
+IntStream	mapToInt(ToIntFunction<? super T> mapper)
+Returns an IntStream consisting of the results of applying the given function to the elements of this stream.
+LongStream	mapToLong(ToLongFunction<? super T> mapper)
+Returns a LongStream consisting of the results of applying the given function to the elements of this stream.
+Optional<T>	max(Comparator<? super T> comparator)
+Returns the maximum element of this stream according to the provided Comparator.
+Optional<T>	min(Comparator<? super T> comparator)
+Returns the minimum element of this stream according to the provided Comparator.
+boolean	noneMatch(Predicate<? super T> predicate)
+Returns whether no elements of this stream match the provided predicate.
+static <T> Stream<T>	of(T... values)
+Returns a sequential ordered stream whose elements are the specified values.
+static <T> Stream<T>	of(T t)
+Returns a sequential Stream containing a single element.
+Stream<T>	peek(Consumer<? super T> action)
+Returns a stream consisting of the elements of this stream, additionally performing the provided action on each element as elements are consumed from the resulting stream.
+Optional<T>	reduce(BinaryOperator<T> accumulator)
+Performs a reduction on the elements of this stream, using an associative accumulation function, and returns an Optional describing the reduced value, if any.
+T	reduce(T identity, BinaryOperator<T> accumulator)
+Performs a reduction on the elements of this stream, using the provided identity value and an associative accumulation function, and returns the reduced value.
+<U> U	reduce(U identity, BiFunction<U,? super T,U> accumulator, BinaryOperator<U> combiner)
+Performs a reduction on the elements of this stream, using the provided identity, accumulation and combining functions.
+Stream<T>	skip(long n)
+Returns a stream consisting of the remaining elements of this stream after discarding the first n elements of the stream.
+Stream<T>	sorted()
+Returns a stream consisting of the elements of this stream, sorted according to natural order.
+Stream<T>	sorted(Comparator<? super T> comparator)
+Returns a stream consisting of the elements of this stream, sorted according to the provided Comparator.
+Object[]	toArray()
+Returns an array containing the elements of this stream.
+<A> A[]	toArray(IntFunction<A[]> generator)
+Returns an array containing the elements of this stream, using the provided generator function to allocate the returned array, as well as any additional arrays that might be required for a partitioned execution or for resizing.
+Methods inherited from interface java.util.stream.BaseStream
+close, isParallel, iterator, onClose, parallel, sequential, spliterator, unordered
+Method Detail
+filter
+Stream<T> filter(Predicate<? super T> predicate)
+Returns a stream consisting of the elements of this stream that match the given predicate.
+This is an intermediate operation.
+
+Parameters:
+predicate - a non-interfering, stateless predicate to apply to each element to determine if it should be included
+Returns:
+the new stream
+map
+<R> Stream<R> map(Function<? super T,? extends R> mapper)
+Returns a stream consisting of the results of applying the given function to the elements of this stream.
+This is an intermediate operation.
+
+Type Parameters:
+R - The element type of the new stream
+Parameters:
+mapper - a non-interfering, stateless function to apply to each element
+Returns:
+the new stream
+mapToInt
+IntStream mapToInt(ToIntFunction<? super T> mapper)
+Returns an IntStream consisting of the results of applying the given function to the elements of this stream.
+This is an intermediate operation.
+
+Parameters:
+mapper - a non-interfering, stateless function to apply to each element
+Returns:
+the new stream
+mapToLong
+LongStream mapToLong(ToLongFunction<? super T> mapper)
+Returns a LongStream consisting of the results of applying the given function to the elements of this stream.
+This is an intermediate operation.
+
+Parameters:
+mapper - a non-interfering, stateless function to apply to each element
+Returns:
+the new stream
+mapToDouble
+DoubleStream mapToDouble(ToDoubleFunction<? super T> mapper)
+Returns a DoubleStream consisting of the results of applying the given function to the elements of this stream.
+This is an intermediate operation.
+
+Parameters:
+mapper - a non-interfering, stateless function to apply to each element
+Returns:
+the new stream
+flatMap
+<R> Stream<R> flatMap(Function<? super T,? extends Stream<? extends R>> mapper)
+Returns a stream consisting of the results of replacing each element of this stream with the contents of a mapped stream produced by applying the provided mapping function to each element. Each mapped stream is closed after its contents have been placed into this stream. (If a mapped stream is null an empty stream is used, instead.)
+This is an intermediate operation.
+
+API Note:
+The flatMap() operation has the effect of applying a one-to-many transformation to the elements of the stream, and then flattening the resulting elements into a new stream.
+Examples.
+
+If orders is a stream of purchase orders, and each purchase order contains a collection of line items, then the following produces a stream containing all the line items in all the orders:
+
+
+     orders.flatMap(order -> order.getLineItems().stream())...
+ 
+If path is the path to a file, then the following produces a stream of the words contained in that file:
+
+
+     Stream<String> lines = Files.lines(path, StandardCharsets.UTF_8);
+     Stream<String> words = lines.flatMap(line -> Stream.of(line.split(" +")));
+ 
+The mapper function passed to flatMap splits a line, using a simple regular expression, into an array of words, and then creates a stream of words from that array.
+Type Parameters:
+R - The element type of the new stream
+Parameters:
+mapper - a non-interfering, stateless function to apply to each element which produces a stream of new values
+Returns:
+the new stream
+flatMapToInt
+IntStream flatMapToInt(Function<? super T,? extends IntStream> mapper)
+Returns an IntStream consisting of the results of replacing each element of this stream with the contents of a mapped stream produced by applying the provided mapping function to each element. Each mapped stream is closed after its contents have been placed into this stream. (If a mapped stream is null an empty stream is used, instead.)
+This is an intermediate operation.
+
+Parameters:
+mapper - a non-interfering, stateless function to apply to each element which produces a stream of new values
+Returns:
+the new stream
+See Also:
+flatMap(Function)
+flatMapToLong
+LongStream flatMapToLong(Function<? super T,? extends LongStream> mapper)
+Returns an LongStream consisting of the results of replacing each element of this stream with the contents of a mapped stream produced by applying the provided mapping function to each element. Each mapped stream is closed after its contents have been placed into this stream. (If a mapped stream is null an empty stream is used, instead.)
+This is an intermediate operation.
+
+Parameters:
+mapper - a non-interfering, stateless function to apply to each element which produces a stream of new values
+Returns:
+the new stream
+See Also:
+flatMap(Function)
+flatMapToDouble
+compact1, compact2, compact3
+java.util.stream
+Interface Stream<T>
+Type Parameters:
+T - the type of the stream elements
+All Superinterfaces:
+AutoCloseable, BaseStream<T,Stream<T>>
+
+public interface Stream<T>
+extends BaseStream<T,Stream<T>>
+A sequence of elements supporting sequential and parallel aggregate operations. The following example illustrates an aggregate operation using Stream and IntStream:
+
+     int sum = widgets.stream()
+                      .filter(w -> w.getColor() == RED)
+                      .mapToInt(w -> w.getWeight())
+                      .sum();
+ 
+In this example, widgets is a Collection<Widget>. We create a stream of Widget objects via Collection.stream(), filter it to produce a stream containing only the red widgets, and then transform it into a stream of int values representing the weight of each red widget. Then this stream is summed to produce a total weight.
+In addition to Stream, which is a stream of object references, there are primitive specializations for IntStream, LongStream, and DoubleStream, all of which are referred to as "streams" and conform to the characteristics and restrictions described here.
+
+To perform a computation, stream operations are composed into a stream pipeline. A stream pipeline consists of a source (which might be an array, a collection, a generator function, an I/O channel, etc), zero or more intermediate operations (which transform a stream into another stream, such as filter(Predicate)), and a terminal operation (which produces a result or side-effect, such as count() or forEach(Consumer)). Streams are lazy; computation on the source data is only performed when the terminal operation is initiated, and source elements are consumed only as needed.
+
+Collections and streams, while bearing some superficial similarities, have different goals. Collections are primarily concerned with the efficient management of, and access to, their elements. By contrast, streams do not provide a means to directly access or manipulate their elements, and are instead concerned with declaratively describing their source and the computational operations which will be performed in aggregate on that source. However, if the provided stream operations do not offer the desired functionality, the BaseStream.iterator() and BaseStream.spliterator() operations can be used to perform a controlled traversal.
+
+A stream pipeline, like the "widgets" example above, can be viewed as a query on the stream source. Unless the source was explicitly designed for concurrent modification (such as a ConcurrentHashMap), unpredictable or erroneous behavior may result from modifying the stream source while it is being queried.
+
+Most stream operations accept parameters that describe user-specified behavior, such as the lambda expression w -> w.getWeight() passed to mapToInt in the example above. To preserve correct behavior, these behavioral parameters:
+
+must be non-interfering (they do not modify the stream source); and
+in most cases must be stateless (their result should not depend on any state that might change during execution of the stream pipeline).
+Such parameters are always instances of a functional interface such as Function, and are often lambda expressions or method references. Unless otherwise specified these parameters must be non-null.
+
+A stream should be operated on (invoking an intermediate or terminal stream operation) only once. This rules out, for example, "forked" streams, where the same source feeds two or more pipelines, or multiple traversals of the same stream. A stream implementation may throw IllegalStateException if it detects that the stream is being reused. However, since some stream operations may return their receiver rather than a new stream object, it may not be possible to detect reuse in all cases.
+
+Streams have a BaseStream.close() method and implement AutoCloseable, but nearly all stream instances do not actually need to be closed after use. Generally, only streams whose source is an IO channel (such as those returned by Files.lines(Path, Charset)) will require closing. Most streams are backed by collections, arrays, or generating functions, which require no special resource management. (If a stream does require closing, it can be declared as a resource in a try-with-resources statement.)
+
+Stream pipelines may execute either sequentially or in parallel. This execution mode is a property of the stream. Streams are created with an initial choice of sequential or parallel execution. (For example, Collection.stream() creates a sequential stream, and Collection.parallelStream() creates a parallel one.) This choice of execution mode may be modified by the BaseStream.sequential() or BaseStream.parallel() methods, and may be queried with the BaseStream.isParallel() method.
+
+Since:
+1.8
+See Also:
+IntStream, LongStream, DoubleStream, java.util.stream
+Nested Class Summary
+Nested Classes
+Modifier and Type	Interface and Description
+static interface 	Stream.Builder<T>
+A mutable builder for a Stream.
+Method Summary
+All MethodsStatic MethodsInstance MethodsAbstract MethodsDefault Methods
+Modifier and Type	Method and Description
+boolean	allMatch(Predicate<? super T> predicate)
+Returns whether all elements of this stream match the provided predicate.
+boolean	anyMatch(Predicate<? super T> predicate)
+Returns whether any elements of this stream match the provided predicate.
+static <T> Stream.Builder<T>	builder()
+Returns a builder for a Stream.
+<R,A> R	collect(Collector<? super T,A,R> collector)
+Performs a mutable reduction operation on the elements of this stream using a Collector.
+<R> R	collect(Supplier<R> supplier, BiConsumer<R,? super T> accumulator, BiConsumer<R,R> combiner)
+Performs a mutable reduction operation on the elements of this stream.
+static <T> Stream<T>	concat(Stream<? extends T> a, Stream<? extends T> b)
+Creates a lazily concatenated stream whose elements are all the elements of the first stream followed by all the elements of the second stream.
+long	count()
+Returns the count of elements in this stream.
+Stream<T>	distinct()
+Returns a stream consisting of the distinct elements (according to Object.equals(Object)) of this stream.
+static <T> Stream<T>	empty()
+Returns an empty sequential Stream.
+Stream<T>	filter(Predicate<? super T> predicate)
+Returns a stream consisting of the elements of this stream that match the given predicate.
+Optional<T>	findAny()
+Returns an Optional describing some element of the stream, or an empty Optional if the stream is empty.
+Optional<T>	findFirst()
+Returns an Optional describing the first element of this stream, or an empty Optional if the stream is empty.
+<R> Stream<R>	flatMap(Function<? super T,? extends Stream<? extends R>> mapper)
+Returns a stream consisting of the results of replacing each element of this stream with the contents of a mapped stream produced by applying the provided mapping function to each element.
+DoubleStream	flatMapToDouble(Function<? super T,? extends DoubleStream> mapper)
+Returns an DoubleStream consisting of the results of replacing each element of this stream with the contents of a mapped stream produced by applying the provided mapping function to each element.
+IntStream	flatMapToInt(Function<? super T,? extends IntStream> mapper)
+Returns an IntStream consisting of the results of replacing each element of this stream with the contents of a mapped stream produced by applying the provided mapping function to each element.
+LongStream	flatMapToLong(Function<? super T,? extends LongStream> mapper)
+Returns an LongStream consisting of the results of replacing each element of this stream with the contents of a mapped stream produced by applying the provided mapping function to each element.
+void	forEach(Consumer<? super T> action)
+Performs an action for each element of this stream.
+void	forEachOrdered(Consumer<? super T> action)
+Performs an action for each element of this stream, in the encounter order of the stream if the stream has a defined encounter order.
+static <T> Stream<T>	generate(Supplier<T> s)
+Returns an infinite sequential unordered stream where each element is generated by the provided Supplier.
+static <T> Stream<T>	iterate(T seed, UnaryOperator<T> f)
+Returns an infinite sequential ordered Stream produced by iterative application of a function f to an initial element seed, producing a Stream consisting of seed, f(seed), f(f(seed)), etc.
+Stream<T>	limit(long maxSize)
+Returns a stream consisting of the elements of this stream, truncated to be no longer than maxSize in length.
+<R> Stream<R>	map(Function<? super T,? extends R> mapper)
+Returns a stream consisting of the results of applying the given function to the elements of this stream.
+DoubleStream	mapToDouble(ToDoubleFunction<? super T> mapper)
+Returns a DoubleStream consisting of the results of applying the given function to the elements of this stream.
+IntStream	mapToInt(ToIntFunction<? super T> mapper)
+Returns an IntStream consisting of the results of applying the given function to the elements of this stream.
+LongStream	mapToLong(ToLongFunction<? super T> mapper)
+Returns a LongStream consisting of the results of applying the given function to the elements of this stream.
+Optional<T>	max(Comparator<? super T> comparator)
+Returns the maximum element of this stream according to the provided Comparator.
+Optional<T>	min(Comparator<? super T> comparator)
+Returns the minimum element of this stream according to the provided Comparator.
+boolean	noneMatch(Predicate<? super T> predicate)
+Returns whether no elements of this stream match the provided predicate.
+static <T> Stream<T>	of(T... values)
+Returns a sequential ordered stream whose elements are the specified values.
+static <T> Stream<T>	of(T t)
+Returns a sequential Stream containing a single element.
+Stream<T>	peek(Consumer<? super T> action)
+Returns a stream consisting of the elements of this stream, additionally performing the provided action on each element as elements are consumed from the resulting stream.
+Optional<T>	reduce(BinaryOperator<T> accumulator)
+Performs a reduction on the elements of this stream, using an associative accumulation function, and returns an Optional describing the reduced value, if any.
+T	reduce(T identity, BinaryOperator<T> accumulator)
+Performs a reduction on the elements of this stream, using the provided identity value and an associative accumulation function, and returns the reduced value.
+<U> U	reduce(U identity, BiFunction<U,? super T,U> accumulator, BinaryOperator<U> combiner)
+Performs a reduction on the elements of this stream, using the provided identity, accumulation and combining functions.
+Stream<T>	skip(long n)
+Returns a stream consisting of the remaining elements of this stream after discarding the first n elements of the stream.
+Stream<T>	sorted()
+Returns a stream consisting of the elements of this stream, sorted according to natural order.
+Stream<T>	sorted(Comparator<? super T> comparator)
+Returns a stream consisting of the elements of this stream, sorted according to the provided Comparator.
+Object[]	toArray()
+Returns an array containing the elements of this stream.
+<A> A[]	toArray(IntFunction<A[]> generator)
+Returns an array containing the elements of this stream, using the provided generator function to allocate the returned array, as well as any additional arrays that might be required for a partitioned execution or for resizing.
+Methods inherited from interface java.util.stream.BaseStream
+close, isParallel, iterator, onClose, parallel, sequential, spliterator, unordered
+Method Detail
+filter
+Stream<T> filter(Predicate<? super T> predicate)
+Returns a stream consisting of the elements of this stream that match the given predicate.
+This is an intermediate operation.
+
+Parameters:
+predicate - a non-interfering, stateless predicate to apply to each element to determine if it should be included
+Returns:
+the new stream
+map
+<R> Stream<R> map(Function<? super T,? extends R> mapper)
+Returns a stream consisting of the results of applying the given function to the elements of this stream.
+This is an intermediate operation.
+
+Type Parameters:
+R - The element type of the new stream
+Parameters:
+mapper - a non-interfering, stateless function to apply to each element
+Returns:
+the new stream
+mapToInt
+IntStream mapToInt(ToIntFunction<? super T> mapper)
+Returns an IntStream consisting of the results of applying the given function to the elements of this stream.
+This is an intermediate operation.
+
+Parameters:
+mapper - a non-interfering, stateless function to apply to each element
+Returns:
+the new stream
+mapToLong
+LongStream mapToLong(ToLongFunction<? super T> mapper)
+Returns a LongStream consisting of the results of applying the given function to the elements of this stream.
+This is an intermediate operation.
+
+Parameters:
+mapper - a non-interfering, stateless function to apply to each element
+Returns:
+the new stream
+mapToDouble
+DoubleStream mapToDouble(ToDoubleFunction<? super T> mapper)
+Returns a DoubleStream consisting of the results of applying the given function to the elements of this stream.
+This is an intermediate operation.
+
+Parameters:
+mapper - a non-interfering, stateless function to apply to each element
+Returns:
+the new stream
+flatMap
+<R> Stream<R> flatMap(Function<? super T,? extends Stream<? extends R>> mapper)
+Returns a stream consisting of the results of replacing each element of this stream with the contents of a mapped stream produced by applying the provided mapping function to each element. Each mapped stream is closed after its contents have been placed into this stream. (If a mapped stream is null an empty stream is used, instead.)
+This is an intermediate operation.
+
+API Note:
+The flatMap() operation has the effect of applying a one-to-many transformation to the elements of the stream, and then flattening the resulting elements into a new stream.
+Examples.
+
+If orders is a stream of purchase orders, and each purchase order contains a collection of line items, then the following produces a stream containing all the line items in all the orders:
+
+
+     orders.flatMap(order -> order.getLineItems().stream())...
+ 
+If path is the path to a file, then the following produces a stream of the words contained in that file:
+
+
+     Stream<String> lines = Files.lines(path, StandardCharsets.UTF_8);
+     Stream<String> words = lines.flatMap(line -> Stream.of(line.split(" +")));
+ 
+The mapper function passed to flatMap splits a line, using a simple regular expression, into an array of words, and then creates a stream of words from that array.
+Type Parameters:
+R - The element type of the new stream
+Parameters:
+mapper - a non-interfering, stateless function to apply to each element which produces a stream of new values
+Returns:
+the new stream
+flatMapToInt
+IntStream flatMapToInt(Function<? super T,? extends IntStream> mapper)
+Returns an IntStream consisting of the results of replacing each element of this stream with the contents of a mapped stream produced by applying the provided mapping function to each element. Each mapped stream is closed after its contents have been placed into this stream. (If a mapped stream is null an empty stream is used, instead.)
+This is an intermediate operation.
+
+Parameters:
+mapper - a non-interfering, stateless function to apply to each element which produces a stream of new values
+Returns:
+the new stream
+See Also:
+flatMap(Function)
+flatMapToLong
+LongStream flatMapToLong(Function<? super T,? extends LongStream> mapper)
+Returns an LongStream consisting of the results of replacing each element of this stream with the contents of a mapped stream produced by applying the provided mapping function to each element. Each mapped stream is closed after its contents have been placed into this stream. (If a mapped stream is null an empty stream is used, instead.)
+This is an intermediate operation.
+
+Parameters:
+mapper - a non-interfering, stateless function to apply to each element which produces a stream of new values
+Returns:
+the new stream
+See Also:
+flatMap(Function)
+flatMapToDouble
